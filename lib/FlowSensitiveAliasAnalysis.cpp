@@ -109,7 +109,7 @@ void PointsToAnalysis::runAnalysis(llvm::Instruction* Inst) {
     // Extract alias tokens from the instruction
     auto Aliases = AT->extractAliasToken(Inst);
     // Check if the instruction is present in demand
-    if (!isa<AllocaInst>(Inst) && !isa<CallInst>(Inst)) {
+    if (!isa<CallInst>(Inst)) {
         bool InDemand = false;
         for (auto X : Aliases) {
             InDemand |= isInDemandOut(X, Inst);
