@@ -1,22 +1,22 @@
 #include "DemandDrivenAliasAnalysis.h"
-#include "AliasGraph/AliasGraph.h"
-#include "AliasToken/Alias.h"
-#include "AliasToken/AliasToken.h"
-#include "CFGUtils/CFGUtils.h"
 #include "DemandDrivenAliasAnalysisDriver.h"
 #include "FlowSensitiveAliasAnalysis.h"
 #include "SimpleDemandAnalysis.h"
 #include "iostream"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Module.h"
+#include "spatial/Graph/AliasGraph.h"
+#include "spatial/Token/Alias.h"
+#include "spatial/Token/AliasToken.h"
+#include "spatial/Utils/CFGUtils.h"
 #include "stack"
 
 using namespace llvm;
-using AliasMap = AliasGraphUtil::AliasGraph<AliasUtil::Alias>;
+using AliasMap = spatial::AliasGraph<spatial::Alias>;
 
 DemandDrivenAliasAnalysis::DemandDrivenAliasAnalysis(llvm::Instruction* Origin,
                                                      llvm::Module& M) {
-    AT = new AliasUtil::AliasTokens();
+    AT = new spatial::AliasTokens();
     AliasWorklist = new std::stack<llvm::Instruction*>();
     DemandWorklist = new std::stack<llvm::Instruction*>();
     PA = new FlowSensitiveAA::PointsToAnalysis(M, AT, AliasWorklist);
@@ -35,7 +35,7 @@ void DemandDrivenAliasAnalysis::run() {
             DA->runAnalysis(Inst);
             auto NewDemandInfo = DA->getDemandIn(Inst);
             if (!(OldDemandInfo == NewDemandInfo)) {
-                for (Instruction* I : CFGUtils::GetPred(Inst)) {
+                for (Instruction* I : spatial::GetPred(Inst)) {
                     DemandWorklist->push(I);
                     AliasWorklist->push(I);
                 }
@@ -48,7 +48,7 @@ void DemandDrivenAliasAnalysis::run() {
             PA->runAnalysis(Inst);
             AliasMap NewAliasInfo = PA->getAliasOut(Inst);
             if (!(OldAliasInfo == NewAliasInfo)) {
-                for (Instruction* I : CFGUtils::GetSucc(Inst)) {
+                for (Instruction* I : spatial::GetSucc(Inst)) {
                     AliasWorklist->push(I);
                     DemandWorklist->push(I);
                 }

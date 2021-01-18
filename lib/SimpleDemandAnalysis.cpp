@@ -1,18 +1,18 @@
 #include "SimpleDemandAnalysis.h"
-#include "AliasGraph/AliasGraph.h"
-#include "AliasToken/Alias.h"
-#include "AliasToken/AliasToken.h"
-#include "CFGUtils/CFGUtils.h"
 #include "DemandDrivenAliasAnalysisDriver.h"
 #include "SimpleDemandAnalysis.h"
 #include "iostream"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Module.h"
 #include "set"
+#include "spatial/Graph/AliasGraph.h"
+#include "spatial/Token/Alias.h"
+#include "spatial/Token/AliasToken.h"
+#include "spatial/Utils/CFGUtils.h"
 
 using namespace llvm;
 using namespace SimpleDA;
-using AliasMap = AliasGraphUtil::AliasGraph<AliasUtil::Alias>;
+using AliasMap = spatial::AliasGraph<spatial::Alias>;
 
 void DemandAnalysis::handleCallReturn(llvm::Instruction* Inst) {
     DemandIn[Inst] = DemandOut[Inst];
@@ -38,14 +38,14 @@ void DemandAnalysis::handleCallReturn(llvm::Instruction* Inst) {
 void DemandAnalysis::runAnalysis(llvm::Instruction* Inst) {
     llvm::BasicBlock* ParentBB = Inst->getParent();
     llvm::Function* ParentFunc = ParentBB->getParent();
-    std::vector<std::set<AliasUtil::Alias*>> Successors;
+    std::vector<std::set<spatial::Alias*>> Successors;
     // Extract alias tokens from the instruction
     auto Aliases = AT->extractAliasToken(Inst);
     if (Inst == this->Origin && Aliases.size() > 0) {
         DemandOut[Inst].insert(Aliases[0]);
     }
     // Calculate control flow predecessor
-    for (Instruction* I : CFGUtils::GetSucc(Inst)) {
+    for (Instruction* I : spatial::GetSucc(Inst)) {
         if (DemandIn.find(I) != DemandIn.end())
             Successors.push_back(DemandIn[I]);
     }
@@ -57,11 +57,11 @@ void DemandAnalysis::runAnalysis(llvm::Instruction* Inst) {
     if (CallInst* CI = dyn_cast<CallInst>(Inst)) {
         if (!CI->isIndirectCall()) {
             Function& Func = *CI->getCalledFunction();
-            if (!CFGUtils::SkipFunction(Func)) {
+            if (!spatial::SkipFunction(Func)) {
                 // handle pass by reference
                 for (Value* Arg : CI->args()) {
-                    AliasUtil::Alias* ActualArg =
-                        AT->getAliasToken(new AliasUtil::Alias(Arg));
+                    spatial::Alias* ActualArg =
+                        AT->getAliasToken(new spatial::Alias(Arg));
                     DemandOut[&(Func.back().back())].insert(ActualArg);
                     // If Actual argument points-to its dummy node then
                     // also insert its source mapped pointee
@@ -129,22 +129,20 @@ void DemandAnalysis::printResults(llvm::Module& M) {
         }
     }
 }
-bool DemandAnalysis::inDemandOut(AliasUtil::Alias* Tok,
-                                 llvm::Instruction* Inst) {
+bool DemandAnalysis::inDemandOut(spatial::Alias* Tok, llvm::Instruction* Inst) {
     bool Found = false;
     if (DemandOut.find(Inst) == DemandOut.end()) return false;
     if (DemandOut[Inst].find(Tok) != DemandOut[Inst].end()) Found = true;
     return Found;
 }
-std::set<AliasUtil::Alias*> DemandAnalysis::getDemandOut(
+std::set<spatial::Alias*> DemandAnalysis::getDemandOut(
     llvm::Instruction* Inst) {
-    std::set<AliasUtil::Alias*> Demand;
+    std::set<spatial::Alias*> Demand;
     if (DemandOut.find(Inst) != DemandOut.end()) Demand = DemandOut[Inst];
     return Demand;
 }
-std::set<AliasUtil::Alias*> DemandAnalysis::getDemandIn(
-    llvm::Instruction* Inst) {
-    std::set<AliasUtil::Alias*> Demand;
+std::set<spatial::Alias*> DemandAnalysis::getDemandIn(llvm::Instruction* Inst) {
+    std::set<spatial::Alias*> Demand;
     if (DemandIn.find(Inst) != DemandIn.end()) Demand = DemandIn[Inst];
     return Demand;
 }

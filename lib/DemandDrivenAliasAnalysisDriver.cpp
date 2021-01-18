@@ -1,9 +1,9 @@
 #include "DemandDrivenAliasAnalysisDriver.h"
-#include "AliasBench/Benchmark.h"
-#include "AliasGraph/AliasGraph.h"
-#include "AliasToken/Alias.h"
-#include "AliasToken/AliasToken.h"
-#include "CFGUtils/CFGUtils.h"
+#include "spatial/Benchmark/Benchmark.h"
+#include "spatial/Graph/AliasGraph.h"
+#include "spatial/Token/Alias.h"
+#include "spatial/Token/AliasToken.h"
+#include "spatial/Utils/CFGUtils.h"
 #include "DemandDrivenAliasAnalysis.h"
 #include "FlowSensitiveAliasAnalysis.h"
 #include "SimpleDemandAnalysis.h"
@@ -17,7 +17,7 @@ using namespace llvm;
 bool DemandDrivenAliasAnalysisDriverPass::runOnModule(Module& M) {
     std::vector<Instruction*> VirtualCallSites;
     for (Function& F : M.functions()) {
-        CFGUtils::InstNamer(F);
+        spatial::InstNamer(F);
         for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
             if (CallInst* CI = dyn_cast<CallInst>(&*I)) {
                 if (CI->isIndirectCall() && CI->arg_size() == 1) {
@@ -36,7 +36,7 @@ bool DemandDrivenAliasAnalysisDriverPass::runOnModule(Module& M) {
     for (Instruction* Inst : VirtualCallSites) {
         DemandDrivenAliasAnalysis DDAA(Inst, M);
         DDAA.run();
-    //  DDAA.printDataFlowValues(M);
+        DDAA.printDataFlowValues(M);
         DDAA.printResult(Inst);
     }
     return false;

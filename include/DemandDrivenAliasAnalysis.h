@@ -1,7 +1,7 @@
 #ifndef DEMANDDRIVENALIASANALYSIS_H
 #define DEMANDDRIVENALIASANALYSIS_H
 
-#include "AliasToken/AliasToken.h"
+#include "spatial/Token/AliasToken.h"
 #include "FlowSensitiveAliasAnalysis.h"
 #include "SimpleDemandAnalysis.h"
 #include "llvm/IR/Module.h"
@@ -11,7 +11,7 @@ using namespace llvm;
 
 class DemandDrivenAliasAnalysis {
    private:
-    AliasUtil::AliasTokens* AT;
+    spatial::AliasTokens* AT;
     std::stack<llvm::Instruction*>* AliasWorklist;
     std::stack<llvm::Instruction*>* DemandWorklist;
     FlowSensitiveAA::PointsToAnalysis* PA;
