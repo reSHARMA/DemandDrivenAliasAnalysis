@@ -135,6 +135,7 @@ void PointsToAnalysis::runAnalysis(llvm::Instruction* Inst) {
     // Handle special cases:
     // Handle GEP instructions
     if (GetElementPtrInst* GEP = dyn_cast<GetElementPtrInst>(Inst)) {
+        Aliases[1] = AT->getAliasTokenWithoutIndex(Aliases[1]);
         for (auto A : AliasOut[Inst].getPointee(Aliases[1])) {
             spatial::Alias* FieldVal = new spatial::Alias(A);
             FieldVal->setIndex(GEP);
