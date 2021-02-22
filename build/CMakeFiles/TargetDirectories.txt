@@ -1,0 +1,9 @@
+/home/kaushik/Desktop/MTP/DemandDrivenAliasAnalysis/build/CMakeFiles/rebuild_cache.dir
+/home/kaushik/Desktop/MTP/DemandDrivenAliasAnalysis/build/CMakeFiles/edit_cache.dir
+/home/kaushik/Desktop/MTP/DemandDrivenAliasAnalysis/build/CMakeFiles/intrinsics_gen.dir
+/home/kaushik/Desktop/MTP/DemandDrivenAliasAnalysis/build/lib/CMakeFiles/rebuild_cache.dir
+/home/kaushik/Desktop/MTP/DemandDrivenAliasAnalysis/build/lib/CMakeFiles/edit_cache.dir
+/home/kaushik/Desktop/MTP/DemandDrivenAliasAnalysis/build/lib/CMakeFiles/AliasAnalysis.dir
+/home/kaushik/Desktop/MTP/DemandDrivenAliasAnalysis/build/src/CMakeFiles/rebuild_cache.dir
+/home/kaushik/Desktop/MTP/DemandDrivenAliasAnalysis/build/src/CMakeFiles/edit_cache.dir
+/home/kaushik/Desktop/MTP/DemandDrivenAliasAnalysis/build/src/CMakeFiles/DDAADriver.dir
