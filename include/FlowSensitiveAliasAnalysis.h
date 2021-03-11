@@ -9,7 +9,7 @@
 #include "llvm/IR/Module.h"
 #include "map"
 #include "set"
-#include "spatial/Benchmark/Benchmark.h"
+#include "spatial/Benchmark/PTABenchmark.h"
 #include "spatial/Graph/AliasGraph.h"
 #include "spatial/Token/Alias.h"
 #include "spatial/Token/AliasToken.h"
@@ -30,7 +30,7 @@ class PointsToAnalysis {
     AliasMap GlobalAliasMap;
     std::map<Instruction*, AliasMap> AliasIn, AliasOut;
     spatial::AliasTokens* AT;
-    spatial::BenchmarkRunner Bench;
+    spatial::PTABenchmarkRunner Bench;
     std::stack<llvm::Instruction*>* WorkList;
     std::map<llvm::Function*, std::set<llvm::Instruction*>> CallGraph;
     SimpleDA::DemandAnalysis* DA;
