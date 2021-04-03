@@ -6,21 +6,21 @@
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Module.h"
 #include "spatial/Graph/AliasGraph.h"
-#include "spatial/Token/Alias.h"
-#include "spatial/Token/AliasToken.h"
+#include "spatial/Token/Token.h"
+#include "spatial/Token/TokenWrapper.h"
 #include "spatial/Utils/CFGUtils.h"
 #include "stack"
 
 using namespace llvm;
-using AliasMap = spatial::AliasGraph<spatial::Alias>;
+using AliasMap = spatial::AliasGraph<spatial::Token>;
 
 DemandDrivenAliasAnalysis::DemandDrivenAliasAnalysis(llvm::Instruction* Origin,
                                                      llvm::Module& M) {
-    AT = new spatial::AliasTokens();
+    TW = new spatial::TokenWrapper();
     AliasWorklist = new std::stack<llvm::Instruction*>();
     DemandWorklist = new std::stack<llvm::Instruction*>();
-    PA = new FlowSensitiveAA::PointsToAnalysis(M, AT, AliasWorklist);
-    DA = new SimpleDA::DemandAnalysis(AT, DemandWorklist, Origin);
+    PA = new FlowSensitiveAA::PointsToAnalysis(M, TW, AliasWorklist);
+    DA = new SimpleDA::DemandAnalysis(TW, DemandWorklist, Origin);
     PA->setDemandAnalysis(DA);
     DA->setAliasAnalysis(PA);
     DemandWorklist->push(Origin);

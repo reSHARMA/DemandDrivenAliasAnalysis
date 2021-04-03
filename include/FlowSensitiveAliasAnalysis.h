@@ -11,13 +11,13 @@
 #include "set"
 #include "spatial/Benchmark/PTABenchmark.h"
 #include "spatial/Graph/AliasGraph.h"
-#include "spatial/Token/Alias.h"
-#include "spatial/Token/AliasToken.h"
+#include "spatial/Token/Token.h"
+#include "spatial/Token/TokenWrapper.h"
 #include "stack"
 #include "string"
 
 using namespace llvm;
-using AliasMap = spatial::AliasGraph<spatial::Alias>;
+using AliasMap = spatial::AliasGraph<spatial::Token>;
 
 namespace SimpleDA {
 class DemandAnalysis;
@@ -29,16 +29,16 @@ class PointsToAnalysis {
    private:
     AliasMap GlobalAliasMap;
     std::map<Instruction*, AliasMap> AliasIn, AliasOut;
-    spatial::AliasTokens* AT;
+    spatial::TokenWrapper* TW;
     spatial::PTABenchmarkRunner Bench;
     std::stack<llvm::Instruction*>* WorkList;
     std::map<llvm::Function*, std::set<llvm::Instruction*>> CallGraph;
     SimpleDA::DemandAnalysis* DA;
 
    public:
-    PointsToAnalysis(Module& M, spatial::AliasTokens* AT,
+    PointsToAnalysis(Module& M, spatial::TokenWrapper* TW,
                      std::stack<llvm::Instruction*>* W)
-        : AT(AT), WorkList(W), DA(nullptr) {
+        : TW(TW), WorkList(W), DA(nullptr) {
         initializeWorkList(M);
         handleGlobalVar(M);
     }
@@ -46,12 +46,12 @@ class PointsToAnalysis {
     void handleGlobalVar(llvm::Module& M);
     void handleCallReturn(llvm::Instruction* Inst);
     void initializeWorkList(llvm::Module& M);
-    bool isInDemandOut(spatial::Alias* A, llvm::Instruction* Inst);
+    bool isInDemandOut(spatial::Token* A, llvm::Instruction* Inst);
     void runAnalysis(llvm::Instruction* Inst);
-    std::set<spatial::Alias*> getAliasOut(spatial::Alias* A,
+    std::set<spatial::Token*> getAliasOut(spatial::Token* A,
                                           llvm::Instruction* Inst);
     AliasMap getAliasOut(llvm::Instruction* Inst);
-    spatial::Alias* getUniqueInstPointee(spatial::Alias* A,
+    spatial::Token* getUniqueInstPointee(spatial::Token* A,
                                          llvm::Instruction* Inst);
     void printResults(llvm::Module& M);
 };
