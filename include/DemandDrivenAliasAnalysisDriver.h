@@ -5,11 +5,11 @@
 #include "llvm/Pass.h"
 
 class DemandDrivenAliasAnalysisDriverPass : public llvm::ModulePass {
-   public:
-    static char ID;
-    DemandDrivenAliasAnalysisDriverPass() : ModulePass(ID) {}
+public:
+  static char ID;
+  DemandDrivenAliasAnalysisDriverPass() : ModulePass(ID) {}
 
-    bool runOnModule(llvm::Module& M) override;
+  bool runOnModule(llvm::Module &M) override;
 };
 
 #endif
