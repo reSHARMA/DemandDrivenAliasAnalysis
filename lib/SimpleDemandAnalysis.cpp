@@ -3,7 +3,7 @@
 #include "SimpleDemandAnalysis.h"
 #include "iostream"
 #include "set"
-#include "spatial/Graph/AliasGraph.h"
+#include "spatial/Graph/Graph.h"
 #include "spatial/Token/Token.h"
 #include "spatial/Token/TokenWrapper.h"
 #include "spatial/Utils/CFGUtils.h"
@@ -12,7 +12,7 @@
 
 using namespace llvm;
 using namespace SimpleDA;
-using AliasMap = spatial::AliasGraph<spatial::Token>;
+using PointsToGraph = spatial::Graph<spatial::Token>;
 
 void DemandAnalysis::handleCallReturn(llvm::Instruction *Inst) {
   DemandIn[Inst] = DemandOut[Inst];

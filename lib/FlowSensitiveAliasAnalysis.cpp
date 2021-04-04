@@ -3,7 +3,7 @@
 #include "SimpleDemandAnalysis.h"
 #include "iostream"
 #include "set"
-#include "spatial/Graph/AliasGraph.h"
+#include "spatial/Graph/Graph.h"
 #include "spatial/Token/Token.h"
 #include "spatial/Token/TokenWrapper.h"
 #include "spatial/Utils/CFGUtils.h"
@@ -13,7 +13,7 @@
 
 using namespace llvm;
 using namespace FlowSensitiveAA;
-using AliasMap = spatial::AliasGraph<spatial::Token>;
+using PointsToGraph = spatial::Graph<spatial::Token>;
 
 void PointsToAnalysis::handleGlobalVar(llvm::Module &M) {
   // Handle global variables
@@ -21,13 +21,13 @@ void PointsToAnalysis::handleGlobalVar(llvm::Module &M) {
     auto Tokens = TW->extractToken(&G);
     auto Redirections = TW->extractStatementType(&G);
     if (Tokens.size() == 2) {
-      GlobalAliasMap.insert(Tokens[0], Tokens[1], Redirections.first,
+      GlobalPointsToGraph.insert(Tokens[0], Tokens[1], Redirections.first,
                             Redirections.second);
       // Handle the case when a global variable is initialized
       // with an address
       if (llvm::GlobalVariable *Constant =
               llvm::dyn_cast<GlobalVariable>(G.getInitializer())) {
-        GlobalAliasMap.insert(Tokens[0], TW->getToken(Constant), 2, 1);
+        GlobalPointsToGraph.insert(Tokens[0], TW->getToken(Constant), 2, 1);
       }
     }
   }
@@ -85,21 +85,21 @@ bool PointsToAnalysis::isInDemandOut(spatial::Token *A,
 void PointsToAnalysis::runAnalysis(llvm::Instruction *Inst) {
   llvm::BasicBlock *ParentBB = Inst->getParent();
   llvm::Function *ParentFunc = ParentBB->getParent();
-  std::vector<AliasMap> Predecessors;
+  std::vector<PointsToGraph> Predecessors;
   // Handle function arguments
-  AliasMap ArgAliasMap;
+  PointsToGraph ArgPointsToGraph;
   for (auto Arg = ParentFunc->arg_begin(); Arg != ParentFunc->arg_end();
        Arg++) {
     auto Tokens = TW->extractToken(Arg, ParentFunc);
     if (Tokens.size() == 2)
-      ArgAliasMap.insert(Tokens[0], Tokens[1], 1, 0);
+      ArgPointsToGraph.insert(Tokens[0], Tokens[1], 1, 0);
   }
   // Only calculate aliases for global variables and arguments at
   // the
   // start of the function
   if (&ParentBB->front() == Inst) {
-    Predecessors.push_back(GlobalAliasMap);
-    Predecessors.push_back(ArgAliasMap);
+    Predecessors.push_back(GlobalPointsToGraph);
+    Predecessors.push_back(ArgPointsToGraph);
   }
   // Calculate control flow predecessor
   for (Instruction *I : spatial::GetPred(Inst)) {
@@ -156,7 +156,7 @@ void PointsToAnalysis::runAnalysis(llvm::Instruction *Inst) {
         if (DA->getDemandOut(&(Func.back().back())).size() != 0) {
           // pass alias information
           AliasIn[&(Func.front().front())].merge(
-              std::vector<AliasMap>{AliasIn[Inst]});
+              std::vector<PointsToGraph>{AliasIn[Inst]});
           // handle pass by reference
           int ArgNum = 0;
           for (Value *Arg : CI->args()) {
@@ -204,8 +204,8 @@ PointsToAnalysis::getAliasOut(spatial::Token *A, llvm::Instruction *Inst) {
   Pointee = AliasOut[Inst].getPointee(A);
   return Pointee;
 }
-AliasMap PointsToAnalysis::getAliasOut(llvm::Instruction *Inst) {
-  AliasMap Pointee;
+PointsToGraph PointsToAnalysis::getAliasOut(llvm::Instruction *Inst) {
+  PointsToGraph Pointee;
   if (AliasOut.find(Inst) == AliasOut.end())
     return Pointee;
   Pointee = AliasOut[Inst];

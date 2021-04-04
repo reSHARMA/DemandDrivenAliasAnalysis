@@ -7,7 +7,7 @@
 #include "map"
 #include "set"
 #include "spatial/Benchmark/PTABenchmark.h"
-#include "spatial/Graph/AliasGraph.h"
+#include "spatial/Graph/Graph.h"
 #include "spatial/Token/Token.h"
 #include "spatial/Token/TokenWrapper.h"
 #include "stack"
@@ -17,7 +17,7 @@
 #include "llvm/IR/Module.h"
 
 using namespace llvm;
-using AliasMap = spatial::AliasGraph<spatial::Token>;
+using PointsToGraph = spatial::Graph<spatial::Token>;
 
 namespace SimpleDA {
 class DemandAnalysis;
@@ -27,8 +27,8 @@ namespace FlowSensitiveAA {
 
 class PointsToAnalysis {
 private:
-  AliasMap GlobalAliasMap;
-  std::map<Instruction *, AliasMap> AliasIn, AliasOut;
+  PointsToGraph GlobalPointsToGraph;
+  std::map<Instruction *, PointsToGraph> AliasIn, AliasOut;
   spatial::TokenWrapper *TW;
   spatial::PTABenchmarkRunner Bench;
   std::stack<llvm::Instruction *> *WorkList;
@@ -50,7 +50,7 @@ public:
   void runAnalysis(llvm::Instruction *Inst);
   std::set<spatial::Token *> getAliasOut(spatial::Token *A,
                                          llvm::Instruction *Inst);
-  AliasMap getAliasOut(llvm::Instruction *Inst);
+  PointsToGraph getAliasOut(llvm::Instruction *Inst);
   spatial::Token *getUniqueInstPointee(spatial::Token *A,
                                        llvm::Instruction *Inst);
   void printResults(llvm::Module &M);

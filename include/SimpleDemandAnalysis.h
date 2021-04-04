@@ -7,7 +7,7 @@
 #include "map"
 #include "set"
 #include "spatial/Benchmark/Benchmark.h"
-#include "spatial/Graph/AliasGraph.h"
+#include "spatial/Graph/Graph.h"
 #include "spatial/Token/Token.h"
 #include "spatial/Token/TokenWrapper.h"
 #include "stack"
@@ -16,7 +16,7 @@
 #include "llvm/IR/Module.h"
 
 using namespace llvm;
-using AliasMap = spatial::AliasGraph<spatial::Token>;
+using PointsToGraph = spatial::Graph<spatial::Token>;
 
 namespace FlowSensitiveAA {
 class PointsToAnalysis;

@@ -3,7 +3,7 @@
 #include "FlowSensitiveAliasAnalysis.h"
 #include "SimpleDemandAnalysis.h"
 #include "iostream"
-#include "spatial/Graph/AliasGraph.h"
+#include "spatial/Graph/Graph.h"
 #include "spatial/Token/Token.h"
 #include "spatial/Token/TokenWrapper.h"
 #include "spatial/Utils/CFGUtils.h"
@@ -12,7 +12,7 @@
 #include "llvm/IR/Module.h"
 
 using namespace llvm;
-using AliasMap = spatial::AliasGraph<spatial::Token>;
+using PointsToGraph = spatial::Graph<spatial::Token>;
 
 DemandDrivenAliasAnalysis::DemandDrivenAliasAnalysis(llvm::Instruction *Origin,
                                                      llvm::Module &M) {
@@ -44,9 +44,9 @@ void DemandDrivenAliasAnalysis::run() {
     while (!AliasWorklist->empty()) {
       Instruction *Inst = AliasWorklist->top();
       AliasWorklist->pop();
-      AliasMap OldAliasInfo = PA->getAliasOut(Inst);
+      PointsToGraph OldAliasInfo = PA->getAliasOut(Inst);
       PA->runAnalysis(Inst);
-      AliasMap NewAliasInfo = PA->getAliasOut(Inst);
+      PointsToGraph NewAliasInfo = PA->getAliasOut(Inst);
       if (!(OldAliasInfo == NewAliasInfo)) {
         for (Instruction *I : spatial::GetSucc(Inst)) {
           AliasWorklist->push(I);
@@ -62,7 +62,7 @@ void DemandDrivenAliasAnalysis::printDataFlowValues(llvm::Module &M) {
 }
 void DemandDrivenAliasAnalysis::printResult(llvm::Instruction *Inst) {
   auto Temp = PA->getAliasOut(Inst);
-  AliasMap Result;
+  PointsToGraph Result;
   for (auto X : Temp) {
     if (X.first->getName().endswith("-orig")) {
       Result.insert(X.first, X.second);
