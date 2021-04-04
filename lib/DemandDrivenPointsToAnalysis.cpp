@@ -1,6 +1,6 @@
-#include "DemandDrivenAliasAnalysis.h"
-#include "DemandDrivenAliasAnalysisDriver.h"
-#include "FlowSensitiveAliasAnalysis.h"
+#include "DemandDrivenPointsToAnalysis.h"
+#include "DemandDrivenPointsToAnalysisDriver.h"
+#include "FlowSensitivePointsToAnalysis.h"
 #include "SimpleDemandAnalysis.h"
 #include "iostream"
 #include "spatial/Graph/Graph.h"
@@ -14,20 +14,20 @@
 using namespace llvm;
 using PointsToGraph = spatial::Graph<spatial::Token>;
 
-DemandDrivenAliasAnalysis::DemandDrivenAliasAnalysis(llvm::Instruction *Origin,
+DemandDrivenPointsToAnalysis::DemandDrivenPointsToAnalysis(llvm::Instruction *Origin,
                                                      llvm::Module &M) {
   TW = new spatial::TokenWrapper();
-  AliasWorklist = new std::stack<llvm::Instruction *>();
+  PointsToWorklist = new std::stack<llvm::Instruction *>();
   DemandWorklist = new std::stack<llvm::Instruction *>();
-  PA = new FlowSensitiveAA::PointsToAnalysis(M, TW, AliasWorklist);
+  PA = new FlowSensitiveAA::PointsToAnalysis(M, TW, PointsToWorklist);
   DA = new SimpleDA::DemandAnalysis(TW, DemandWorklist, Origin);
   PA->setDemandAnalysis(DA);
-  DA->setAliasAnalysis(PA);
+  DA->setPointsToAnalysis(PA);
   DemandWorklist->push(Origin);
 }
 
-void DemandDrivenAliasAnalysis::run() {
-  while (!(DemandWorklist->empty() && AliasWorklist->empty())) {
+void DemandDrivenPointsToAnalysis::run() {
+  while (!(DemandWorklist->empty() && PointsToWorklist->empty())) {
     while (!DemandWorklist->empty()) {
       Instruction *Inst = DemandWorklist->top();
       DemandWorklist->pop();
@@ -37,31 +37,31 @@ void DemandDrivenAliasAnalysis::run() {
       if (!(OldDemandInfo == NewDemandInfo)) {
         for (Instruction *I : spatial::GetPred(Inst)) {
           DemandWorklist->push(I);
-          AliasWorklist->push(I);
+          PointsToWorklist->push(I);
         }
       }
     }
-    while (!AliasWorklist->empty()) {
-      Instruction *Inst = AliasWorklist->top();
-      AliasWorklist->pop();
-      PointsToGraph OldAliasInfo = PA->getAliasOut(Inst);
+    while (!PointsToWorklist->empty()) {
+      Instruction *Inst = PointsToWorklist->top();
+      PointsToWorklist->pop();
+      PointsToGraph OldPointsToInfo = PA->getPointsToOut(Inst);
       PA->runAnalysis(Inst);
-      PointsToGraph NewAliasInfo = PA->getAliasOut(Inst);
-      if (!(OldAliasInfo == NewAliasInfo)) {
+      PointsToGraph NewPointsToInfo = PA->getPointsToOut(Inst);
+      if (!(OldPointsToInfo == NewPointsToInfo)) {
         for (Instruction *I : spatial::GetSucc(Inst)) {
-          AliasWorklist->push(I);
+          PointsToWorklist->push(I);
           DemandWorklist->push(I);
         }
       }
     }
   }
 }
-void DemandDrivenAliasAnalysis::printDataFlowValues(llvm::Module &M) {
+void DemandDrivenPointsToAnalysis::printDataFlowValues(llvm::Module &M) {
   DA->printResults(M);
   PA->printResults(M);
 }
-void DemandDrivenAliasAnalysis::printResult(llvm::Instruction *Inst) {
-  auto Temp = PA->getAliasOut(Inst);
+void DemandDrivenPointsToAnalysis::printResult(llvm::Instruction *Inst) {
+  auto Temp = PA->getPointsToOut(Inst);
   PointsToGraph Result;
   for (auto X : Temp) {
     if (X.first->getName().endswith("-orig")) {

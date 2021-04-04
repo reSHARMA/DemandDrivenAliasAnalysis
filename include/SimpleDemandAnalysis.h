@@ -1,8 +1,8 @@
 #ifndef SIMPLEDEMANDANALYSIS_H
 #define SIMPLEDEMANDANALYSIS_H
 
-#include "DemandDrivenAliasAnalysisDriver.h"
-#include "FlowSensitiveAliasAnalysis.h"
+#include "DemandDrivenPointsToAnalysisDriver.h"
+#include "FlowSensitivePointsToAnalysis.h"
 #include "iostream"
 #include "map"
 #include "set"
@@ -39,7 +39,7 @@ public:
       : TW(TW), WorkList(W), Origin(Origin), AA(nullptr) {
     WorkList->push(this->Origin);
   }
-  void setAliasAnalysis(FlowSensitiveAA::PointsToAnalysis *AA) {
+  void setPointsToAnalysis(FlowSensitiveAA::PointsToAnalysis *AA) {
     this->AA = AA;
   }
   void handleCallReturn(llvm::Instruction *Inst);

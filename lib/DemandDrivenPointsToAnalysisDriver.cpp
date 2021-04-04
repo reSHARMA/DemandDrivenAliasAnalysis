@@ -1,6 +1,6 @@
-#include "DemandDrivenAliasAnalysisDriver.h"
-#include "DemandDrivenAliasAnalysis.h"
-#include "FlowSensitiveAliasAnalysis.h"
+#include "DemandDrivenPointsToAnalysisDriver.h"
+#include "DemandDrivenPointsToAnalysis.h"
+#include "FlowSensitivePointsToAnalysis.h"
 #include "SimpleDemandAnalysis.h"
 #include "iostream"
 #include "spatial/Benchmark/Benchmark.h"
@@ -14,7 +14,7 @@
 
 using namespace llvm;
 
-bool DemandDrivenAliasAnalysisDriverPass::runOnModule(Module &M) {
+bool DemandDrivenPointsToAnalysisDriverPass::runOnModule(Module &M) {
   std::vector<Instruction *> VirtualCallSites;
   for (Function &F : M.functions()) {
     spatial::InstNamer(F);
@@ -34,7 +34,7 @@ bool DemandDrivenAliasAnalysisDriverPass::runOnModule(Module &M) {
     return false;
   }
   for (Instruction *Inst : VirtualCallSites) {
-    DemandDrivenAliasAnalysis DDAA(Inst, M);
+    DemandDrivenPointsToAnalysis DDAA(Inst, M);
     DDAA.run();
     DDAA.printDataFlowValues(M);
     DDAA.printResult(Inst);
@@ -42,6 +42,6 @@ bool DemandDrivenAliasAnalysisDriverPass::runOnModule(Module &M) {
   return false;
 }
 
-char DemandDrivenAliasAnalysisDriverPass::ID = 0;
-static RegisterPass<DemandDrivenAliasAnalysisDriverPass>
+char DemandDrivenPointsToAnalysisDriverPass::ID = 0;
+static RegisterPass<DemandDrivenPointsToAnalysisDriverPass>
     X("sddaa", "Simple demand driven alias analysis in LLVM", true, true);

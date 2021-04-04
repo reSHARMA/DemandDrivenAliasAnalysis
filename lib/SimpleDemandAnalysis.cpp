@@ -1,5 +1,5 @@
 #include "SimpleDemandAnalysis.h"
-#include "DemandDrivenAliasAnalysisDriver.h"
+#include "DemandDrivenPointsToAnalysisDriver.h"
 #include "SimpleDemandAnalysis.h"
 #include "iostream"
 #include "set"
@@ -21,9 +21,9 @@ void DemandAnalysis::handleCallReturn(llvm::Instruction *Inst) {
     // handle return value
     if (!CI->doesNotReturn()) {
       if (ReturnInst *RI = dyn_cast<ReturnInst>(&(Func.back().back()))) {
-        auto CallAliases = TW->extractToken(RI);
-        if (CallAliases.size() == 1) {
-          DemandOut[&(Func.back().back())].insert(CallAliases[0]);
+        auto CallTokens = TW->extractToken(RI);
+        if (CallTokens.size() == 1) {
+          DemandOut[&(Func.back().back())].insert(CallTokens[0]);
         }
       }
     }
@@ -40,9 +40,9 @@ void DemandAnalysis::runAnalysis(llvm::Instruction *Inst) {
   llvm::Function *ParentFunc = ParentBB->getParent();
   std::vector<std::set<spatial::Token *>> Successors;
   // Extract alias tokens from the instruction
-  auto Aliases = TW->extractToken(Inst);
-  if (Inst == this->Origin && Aliases.size() > 0) {
-    DemandOut[Inst].insert(Aliases[0]);
+  auto Tokens = TW->extractToken(Inst);
+  if (Inst == this->Origin && Tokens.size() > 0) {
+    DemandOut[Inst].insert(Tokens[0]);
   }
   // Calculate control flow predecessor
   for (Instruction *I : spatial::GetSucc(Inst)) {
@@ -82,33 +82,33 @@ void DemandAnalysis::runAnalysis(llvm::Instruction *Inst) {
   // Find the relative redirection between lhs and rhs
   // example for a = &b:(1, 0)
   auto Redirections = TW->extractStatementType(Inst);
-  if (Aliases.size() == 2) {
+  if (Tokens.size() == 2) {
     // Default behavior is copy ie (1, 1)
     // Handle *x = y
     if (Redirections.first == 2) {
-      DemandIn[Inst].insert(Aliases.begin(), Aliases.end());
-      for (auto A : AA->getAliasOut(Aliases[0], Inst)) {
+      DemandIn[Inst].insert(Tokens.begin(), Tokens.end());
+      for (auto A : AA->getPointsToOut(Tokens[0], Inst)) {
         DemandIn[Inst].insert(A);
       }
     } else if (Redirections.second == 2) {
-      if (DemandOut[Inst].find(Aliases[0]) != DemandOut[Inst].end()) {
-        DemandIn[Inst].insert(Aliases[1]);
-        for (auto A : AA->getAliasOut(Aliases[1], Inst)) {
+      if (DemandOut[Inst].find(Tokens[0]) != DemandOut[Inst].end()) {
+        DemandIn[Inst].insert(Tokens[1]);
+        for (auto A : AA->getPointsToOut(Tokens[1], Inst)) {
           DemandIn[Inst].insert(A);
-          for (auto Temp : AA->getAliasOut(A, Inst)) {
+          for (auto Temp : AA->getPointsToOut(A, Inst)) {
             DemandIn[Inst].insert(Temp);
           }
         }
       }
     } else if (Redirections.second == 1) {
-      DemandIn[Inst].insert(Aliases[1]);
+      DemandIn[Inst].insert(Tokens[1]);
     }
   }
   // Handle killing
   if (Redirections.first == 1) {
-    if (Aliases.size() == 2) {
-      if (DemandIn[Inst].find(Aliases[0]) != DemandIn[Inst].end())
-        DemandIn[Inst].erase(Aliases[0]);
+    if (Tokens.size() == 2) {
+      if (DemandIn[Inst].find(Tokens[0]) != DemandIn[Inst].end())
+        DemandIn[Inst].erase(Tokens[0]);
     }
   }
 }

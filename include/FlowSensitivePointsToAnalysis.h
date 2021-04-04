@@ -1,7 +1,7 @@
-#ifndef FLOWSENSITIVEALIASANALYSIS_H
-#define FLOWSENSITIVEALIASANALYSIS_H
+#ifndef FLOWSENSITIVEPOINTSTOANALYSIS_H
+#define FLOWSENSITIVEPOINTSTOANALYSIS_H
 
-#include "DemandDrivenAliasAnalysisDriver.h"
+#include "DemandDrivenPointsToAnalysisDriver.h"
 #include "SimpleDemandAnalysis.h"
 #include "iostream"
 #include "map"
@@ -28,7 +28,7 @@ namespace FlowSensitiveAA {
 class PointsToAnalysis {
 private:
   PointsToGraph GlobalPointsToGraph;
-  std::map<Instruction *, PointsToGraph> AliasIn, AliasOut;
+  std::map<Instruction *, PointsToGraph> PointsToIn, PointsToOut;
   spatial::TokenWrapper *TW;
   spatial::PTABenchmarkRunner Bench;
   std::stack<llvm::Instruction *> *WorkList;
@@ -48,9 +48,9 @@ public:
   void initializeWorkList(llvm::Module &M);
   bool isInDemandOut(spatial::Token *A, llvm::Instruction *Inst);
   void runAnalysis(llvm::Instruction *Inst);
-  std::set<spatial::Token *> getAliasOut(spatial::Token *A,
+  std::set<spatial::Token *> getPointsToOut(spatial::Token *A,
                                          llvm::Instruction *Inst);
-  PointsToGraph getAliasOut(llvm::Instruction *Inst);
+  PointsToGraph getPointsToOut(llvm::Instruction *Inst);
   spatial::Token *getUniqueInstPointee(spatial::Token *A,
                                        llvm::Instruction *Inst);
   void printResults(llvm::Module &M);

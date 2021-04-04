@@ -1,4 +1,4 @@
-#include "DemandDrivenAliasAnalysisDriver.h"
+#include "DemandDrivenPointsToAnalysisDriver.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
@@ -21,8 +21,8 @@ int main(int argc, char** argv) {
     }
     // TODO Parse cli args elegantly
     if (argc == 2) {
-        DemandDrivenAliasAnalysisDriverPass* AAP =
-            new DemandDrivenAliasAnalysisDriverPass();
+        DemandDrivenPointsToAnalysisDriverPass* AAP =
+            new DemandDrivenPointsToAnalysisDriverPass();
         AAP->runOnModule(*M);
     }
     return 0;
