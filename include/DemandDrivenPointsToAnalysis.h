@@ -3,6 +3,7 @@
 
 #include "FlowSensitivePointsToAnalysis.h"
 #include "SimpleDemandAnalysis.h"
+#include "spatial/InstModel/GenericInstModel/GenericInstModel.h"
 #include "spatial/Token/TokenWrapper.h"
 #include "stack"
 #include "llvm/IR/Module.h"
@@ -12,6 +13,7 @@ using namespace llvm;
 class DemandDrivenPointsToAnalysis {
 private:
   spatial::TokenWrapper *TW;
+  spatial::GenericInstModel *IM;
   std::stack<llvm::Instruction *> *PointsToWorklist;
   std::stack<llvm::Instruction *> *DemandWorklist;
   FlowSensitiveAA::PointsToAnalysis *PA;

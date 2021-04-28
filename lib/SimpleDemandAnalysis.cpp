@@ -21,7 +21,7 @@ void DemandAnalysis::handleCallReturn(llvm::Instruction *Inst) {
     // handle return value
     if (!CI->doesNotReturn()) {
       if (ReturnInst *RI = dyn_cast<ReturnInst>(&(Func.back().back()))) {
-        auto CallTokens = TW->extractToken(RI);
+        auto CallTokens = IM->extractToken(RI);
         if (CallTokens.size() == 1) {
           DemandOut[&(Func.back().back())].insert(CallTokens[0]);
         }
@@ -40,7 +40,7 @@ void DemandAnalysis::runAnalysis(llvm::Instruction *Inst) {
   llvm::Function *ParentFunc = ParentBB->getParent();
   std::vector<std::set<spatial::Token *>> Successors;
   // Extract alias tokens from the instruction
-  auto Tokens = TW->extractToken(Inst);
+  auto Tokens = IM->extractToken(Inst);
   if (Inst == this->Origin && Tokens.size() > 0) {
     DemandOut[Inst].insert(Tokens[0]);
   }
@@ -81,16 +81,16 @@ void DemandAnalysis::runAnalysis(llvm::Instruction *Inst) {
   }
   // Find the relative redirection between lhs and rhs
   // example for a = &b:(1, 0)
-  auto Redirections = TW->extractStatementType(Inst);
+  auto Redirections = IM->extractRedirections(Inst);
   if (Tokens.size() == 2) {
     // Default behavior is copy ie (1, 1)
     // Handle *x = y
-    if (Redirections.first == 2) {
+    if (Redirections[0] == 2) {
       DemandIn[Inst].insert(Tokens.begin(), Tokens.end());
       for (auto A : AA->getPointsToOut(Tokens[0], Inst)) {
         DemandIn[Inst].insert(A);
       }
-    } else if (Redirections.second == 2) {
+    } else if (Redirections[1] == 2) {
       if (DemandOut[Inst].find(Tokens[0]) != DemandOut[Inst].end()) {
         DemandIn[Inst].insert(Tokens[1]);
         for (auto A : AA->getPointsToOut(Tokens[1], Inst)) {
@@ -100,12 +100,12 @@ void DemandAnalysis::runAnalysis(llvm::Instruction *Inst) {
           }
         }
       }
-    } else if (Redirections.second == 1) {
+    } else if (Redirections[1] == 1) {
       DemandIn[Inst].insert(Tokens[1]);
     }
   }
   // Handle killing
-  if (Redirections.first == 1) {
+  if (Redirections[0] == 1) {
     if (Tokens.size() == 2) {
       if (DemandIn[Inst].find(Tokens[0]) != DemandIn[Inst].end())
         DemandIn[Inst].erase(Tokens[0]);

@@ -14,13 +14,14 @@
 using namespace llvm;
 using PointsToGraph = spatial::Graph<spatial::Token>;
 
-DemandDrivenPointsToAnalysis::DemandDrivenPointsToAnalysis(llvm::Instruction *Origin,
-                                                     llvm::Module &M) {
+DemandDrivenPointsToAnalysis::DemandDrivenPointsToAnalysis(
+    llvm::Instruction *Origin, llvm::Module &M) {
   TW = new spatial::TokenWrapper();
+  IM = new spatial::GenericInstModel(TW);
   PointsToWorklist = new std::stack<llvm::Instruction *>();
   DemandWorklist = new std::stack<llvm::Instruction *>();
-  PA = new FlowSensitiveAA::PointsToAnalysis(M, TW, PointsToWorklist);
-  DA = new SimpleDA::DemandAnalysis(TW, DemandWorklist, Origin);
+  PA = new FlowSensitiveAA::PointsToAnalysis(M, TW, IM, PointsToWorklist);
+  DA = new SimpleDA::DemandAnalysis(TW, IM, DemandWorklist, Origin);
   PA->setDemandAnalysis(DA);
   DA->setPointsToAnalysis(PA);
   DemandWorklist->push(Origin);

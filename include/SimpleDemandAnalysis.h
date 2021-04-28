@@ -8,6 +8,7 @@
 #include "set"
 #include "spatial/Benchmark/Benchmark.h"
 #include "spatial/Graph/Graph.h"
+#include "spatial/InstModel/GenericInstModel/GenericInstModel.h"
 #include "spatial/Token/Token.h"
 #include "spatial/Token/TokenWrapper.h"
 #include "stack"
@@ -28,15 +29,16 @@ class DemandAnalysis {
 private:
   std::map<Instruction *, std::set<spatial::Token *>> DemandIn, DemandOut;
   spatial::TokenWrapper *TW;
+  spatial::GenericInstModel *IM;
   std::stack<llvm::Instruction *> *WorkList;
   std::map<llvm::Function *, std::set<llvm::Instruction *>> CallGraph;
   llvm::Instruction *Origin;
   FlowSensitiveAA::PointsToAnalysis *AA;
 
 public:
-  DemandAnalysis(spatial::TokenWrapper *TW, std::stack<llvm::Instruction *> *W,
-                 llvm::Instruction *Origin)
-      : TW(TW), WorkList(W), Origin(Origin), AA(nullptr) {
+  DemandAnalysis(spatial::TokenWrapper *TW, spatial::GenericInstModel *IM,
+                 std::stack<llvm::Instruction *> *W, llvm::Instruction *Origin)
+      : TW(TW), IM(IM), WorkList(W), Origin(Origin), AA(nullptr) {
     WorkList->push(this->Origin);
   }
   void setPointsToAnalysis(FlowSensitiveAA::PointsToAnalysis *AA) {

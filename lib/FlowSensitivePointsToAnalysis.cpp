@@ -18,11 +18,11 @@ using PointsToGraph = spatial::Graph<spatial::Token>;
 void PointsToAnalysis::handleGlobalVar(llvm::Module &M) {
   // Handle global variables
   for (auto &G : M.getGlobalList()) {
-    auto Tokens = TW->extractToken(&G);
-    auto Redirections = TW->extractStatementType(&G);
+    auto Tokens = IM->extractToken(&G);
+    auto Redirections = IM->extractRedirections(&G);
     if (Tokens.size() == 2) {
-      GlobalPointsToGraph.insert(Tokens[0], Tokens[1], Redirections.first,
-                            Redirections.second);
+      GlobalPointsToGraph.insert(Tokens[0], Tokens[1], Redirections[0],
+                                 Redirections[1]);
       // Handle the case when a global variable is initialized
       // with an address
       if (llvm::GlobalVariable *Constant =
@@ -34,16 +34,16 @@ void PointsToAnalysis::handleGlobalVar(llvm::Module &M) {
 }
 void PointsToAnalysis::handleCallReturn(llvm::Instruction *Inst) {
   PointsToOut[Inst] = PointsToIn[Inst];
-  auto Tokens = TW->extractToken(Inst);
+  auto Tokens = IM->extractToken(Inst);
   if (CallInst *CI = dyn_cast<CallInst>(Inst)) {
     Function &Func = *CI->getCalledFunction();
     // handle return value
     if (!CI->doesNotReturn()) {
       if (ReturnInst *RI = dyn_cast<ReturnInst>(&(Func.back().back()))) {
-        auto CallTokens = TW->extractToken(RI);
+        auto CallTokens = IM->extractToken(RI);
         if (CallTokens.size() == 1) {
           PointsToOut[&(Func.back().back())].insert(Tokens[0], CallTokens[0], 1,
-                                                 1);
+                                                    1);
         }
       }
     }
@@ -90,7 +90,7 @@ void PointsToAnalysis::runAnalysis(llvm::Instruction *Inst) {
   PointsToGraph ArgPointsToGraph;
   for (auto Arg = ParentFunc->arg_begin(); Arg != ParentFunc->arg_end();
        Arg++) {
-    auto Tokens = TW->extractToken(Arg, ParentFunc);
+    auto Tokens = IM->extractToken(Arg, ParentFunc);
     if (Tokens.size() == 2)
       ArgPointsToGraph.insert(Tokens[0], Tokens[1], 1, 0);
   }
@@ -109,7 +109,7 @@ void PointsToAnalysis::runAnalysis(llvm::Instruction *Inst) {
   PointsToIn[Inst].merge(Predecessors);
   PointsToOut[Inst] = PointsToIn[Inst];
   // Extract alias tokens from the instruction
-  auto Tokens = TW->extractToken(Inst);
+  auto Tokens = IM->extractToken(Inst);
   // Check if the instruction is present in demand
   if (!isa<CallInst>(Inst)) {
     bool InDemand = false;
@@ -163,7 +163,8 @@ void PointsToAnalysis::runAnalysis(llvm::Instruction *Inst) {
             spatial::Token *ActualArg = TW->getToken(new spatial::Token(Arg));
             spatial::Token *FormalArg =
                 TW->getToken(new spatial::Token(Func.getArg(ArgNum)));
-            PointsToIn[&(Func.front().front())].insert(FormalArg, ActualArg, 1, 1);
+            PointsToIn[&(Func.front().front())].insert(FormalArg, ActualArg, 1,
+                                                       1);
             ArgNum += 1;
           }
           this->WorkList->push(&(Func.front().front()));
@@ -180,19 +181,20 @@ void PointsToAnalysis::runAnalysis(llvm::Instruction *Inst) {
   }
   // Find the relative redirection between lhs and rhs
   // example for a = &b:(1, 0)
-  auto Redirections = TW->extractStatementType(Inst);
+  auto Redirections = IM->extractRedirections(Inst);
   if (Tokens.size() == 2) {
     // Default behavior is copy ie (1, 1)
     // for heap address in RHS make sure it is (x, 0)
     if (Tokens[1]->isMem())
-      Redirections.second = 0;
-    PointsToOut[Inst].insert(Tokens[0], Tokens[1], Redirections.first,
-                          Redirections.second);
+      Redirections[1] = 0;
+    PointsToOut[Inst].insert(Tokens[0], Tokens[1], Redirections[0],
+                             Redirections[1]);
   }
   // Evaluate precision
   auto BenchVar = Bench.extract(Inst);
   if (BenchVar.size() == 2) {
-    Bench.evaluate(Inst, PointsToOut[Inst].getPointee(TW->getToken(BenchVar[0])),
+    Bench.evaluate(Inst,
+                   PointsToOut[Inst].getPointee(TW->getToken(BenchVar[0])),
                    PointsToOut[Inst].getPointee(TW->getToken(BenchVar[1])));
   }
 }

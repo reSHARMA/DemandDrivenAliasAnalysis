@@ -8,6 +8,7 @@
 #include "set"
 #include "spatial/Benchmark/PTABenchmark.h"
 #include "spatial/Graph/Graph.h"
+#include "spatial/InstModel/GenericInstModel/GenericInstModel.h"
 #include "spatial/Token/Token.h"
 #include "spatial/Token/TokenWrapper.h"
 #include "stack"
@@ -30,6 +31,7 @@ private:
   PointsToGraph GlobalPointsToGraph;
   std::map<Instruction *, PointsToGraph> PointsToIn, PointsToOut;
   spatial::TokenWrapper *TW;
+  spatial::GenericInstModel *IM;
   spatial::PTABenchmarkRunner Bench;
   std::stack<llvm::Instruction *> *WorkList;
   std::map<llvm::Function *, std::set<llvm::Instruction *>> CallGraph;
@@ -37,8 +39,9 @@ private:
 
 public:
   PointsToAnalysis(Module &M, spatial::TokenWrapper *TW,
+                   spatial::GenericInstModel *IM,
                    std::stack<llvm::Instruction *> *W)
-      : TW(TW), WorkList(W), DA(nullptr) {
+      : TW(TW), IM(IM), WorkList(W), DA(nullptr) {
     initializeWorkList(M);
     handleGlobalVar(M);
   }
@@ -49,7 +52,7 @@ public:
   bool isInDemandOut(spatial::Token *A, llvm::Instruction *Inst);
   void runAnalysis(llvm::Instruction *Inst);
   std::set<spatial::Token *> getPointsToOut(spatial::Token *A,
-                                         llvm::Instruction *Inst);
+                                            llvm::Instruction *Inst);
   PointsToGraph getPointsToOut(llvm::Instruction *Inst);
   spatial::Token *getUniqueInstPointee(spatial::Token *A,
                                        llvm::Instruction *Inst);

@@ -15,6 +15,8 @@ link_directories(${LLVM_LIBRARY_DIRS})
 
 find_package(ZLIB REQUIRED)
 
+include_directories("/usr/local/include/spatial")
+
 add_library(Spatial SHARED IMPORTED)
 set_target_properties(Spatial PROPERTIES IMPORTED_LOCATION "/usr/local/lib/libSpatial.so")
 
